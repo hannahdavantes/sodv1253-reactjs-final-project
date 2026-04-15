@@ -7,32 +7,54 @@ import WatchlistPage from "./pages/WatchlistPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import ChatPage from "./pages/ChatPage";
 import ErrorPage from "./pages/ErrorPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const router = createBrowserRouter([
   {
-    path: "/",
     element: <MainLayout />,
     errorElement: <ErrorPage />,
     children: [
       {
-        index: true,
+        path: "/",
         element: <LandingPage />,
       },
       {
-        path: "stocks/:symbol",
+        path: "/stocks",
         element: <StockDetailsPage />,
       },
       {
-        path: "watchlist",
-        element: <WatchlistPage />,
+        path: "/watchlist",
+        element: (
+          <ProtectedRoute>
+            <WatchlistPage />
+          </ProtectedRoute>
+        ),
       },
       {
-        path: "portfolio",
-        element: <PortfolioPage />,
+        path: "/portfolio",
+        element: (
+          <ProtectedRoute>
+            <PortfolioPage />
+          </ProtectedRoute>
+        ),
       },
       {
-        path: "chat",
-        element: <ChatPage />,
+        path: "/chat",
+        element: (
+          <ProtectedRoute>
+            <ChatPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/login",
+        element: <LoginPage />,
+      },
+      {
+        path: "/register",
+        element: <RegisterPage />,
       },
     ],
   },
