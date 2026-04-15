@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { poolPromise } from "./config/db.js";
+import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
 
@@ -25,5 +26,7 @@ app.get("/", async (req, res) => {
     res.status(500).json({ error: "Database connection failed" });
   }
 });
+
+app.use("/api/auth", authRoutes);
 
 export default app;
