@@ -1,7 +1,14 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { io } from "socket.io-client";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -100,7 +107,12 @@ const StockDetailsPage = () => {
     e.preventDefault();
     if (!user) return showFeedback("Please log in to add to portfolio");
     try {
-      await addToPortfolio(symbol, stock?.profile?.name, quantity, purchasePrice);
+      await addToPortfolio(
+        symbol,
+        stock?.profile?.name,
+        quantity,
+        purchasePrice,
+      );
       showFeedback("Added to portfolio!");
       setShowPortfolioModal(false);
       setQuantity("");
@@ -122,15 +134,29 @@ const StockDetailsPage = () => {
     setChatInput("");
   };
 
-  if (loading) return <PageWrapper><p>Loading...</p></PageWrapper>;
-  if (error) return <PageWrapper><p>Error: {error}</p></PageWrapper>;
+  if (loading)
+    return (
+      <PageWrapper>
+        <p>Loading...</p>
+      </PageWrapper>
+    );
+  if (error)
+    return (
+      <PageWrapper>
+        <p>Error: {error}</p>
+      </PageWrapper>
+    );
 
   const { quote, profile } = stock;
   const priceChange = quote.d >= 0;
 
   return (
     <PageWrapper>
-      {feedback && <FeedbackBanner $positive={feedback.includes("Added")}>{feedback}</FeedbackBanner>}
+      {feedback && (
+        <FeedbackBanner $positive={feedback.includes("Added")}>
+          {feedback}
+        </FeedbackBanner>
+      )}
 
       {/* Stock Header */}
       <StockHeader>
@@ -138,29 +164,48 @@ const StockDetailsPage = () => {
           {profile.logo && <Logo src={profile.logo} alt={profile.name} />}
           <div>
             <CompanyName>{profile.name || symbol.toUpperCase()}</CompanyName>
-            <SymbolText>{symbol.toUpperCase()} · {profile.exchange}</SymbolText>
+            <SymbolText>
+              {symbol.toUpperCase()} · {profile.exchange}
+            </SymbolText>
           </div>
         </HeaderLeft>
         <PriceBlock>
           <CurrentPrice>${quote.c?.toFixed(2)}</CurrentPrice>
           <Change $positive={priceChange}>
-            {priceChange ? "▲" : "▼"} {Math.abs(quote.d)?.toFixed(2)} ({Math.abs(quote.dp)?.toFixed(2)}%)
+            {priceChange ? "▲" : "▼"} {Math.abs(quote.d)?.toFixed(2)} (
+            {Math.abs(quote.dp)?.toFixed(2)}%)
           </Change>
         </PriceBlock>
       </StockHeader>
 
       {/* Stats Row */}
       <StatsRow>
-        <StatItem><StatLabel>Open</StatLabel><StatValue>${quote.o?.toFixed(2)}</StatValue></StatItem>
-        <StatItem><StatLabel>High</StatLabel><StatValue>${quote.h?.toFixed(2)}</StatValue></StatItem>
-        <StatItem><StatLabel>Low</StatLabel><StatValue>${quote.l?.toFixed(2)}</StatValue></StatItem>
-        <StatItem><StatLabel>Prev Close</StatLabel><StatValue>${quote.pc?.toFixed(2)}</StatValue></StatItem>
+        <StatItem>
+          <StatLabel>Open</StatLabel>
+          <StatValue>${quote.o?.toFixed(2)}</StatValue>
+        </StatItem>
+        <StatItem>
+          <StatLabel>High</StatLabel>
+          <StatValue>${quote.h?.toFixed(2)}</StatValue>
+        </StatItem>
+        <StatItem>
+          <StatLabel>Low</StatLabel>
+          <StatValue>${quote.l?.toFixed(2)}</StatValue>
+        </StatItem>
+        <StatItem>
+          <StatLabel>Prev Close</StatLabel>
+          <StatValue>${quote.pc?.toFixed(2)}</StatValue>
+        </StatItem>
       </StatsRow>
 
       {/* Action Buttons */}
       <ActionButtons>
-        <WatchlistBtn onClick={handleAddToWatchlist}>+ Add to Watchlist</WatchlistBtn>
-        <PortfolioBtn onClick={() => setShowPortfolioModal(true)}>+ Add to Portfolio</PortfolioBtn>
+        <WatchlistBtn onClick={handleAddToWatchlist}>
+          + Add to Watchlist
+        </WatchlistBtn>
+        <PortfolioBtn onClick={() => setShowPortfolioModal(true)}>
+          + Add to Portfolio
+        </PortfolioBtn>
       </ActionButtons>
 
       {/* Portfolio Modal */}
@@ -189,7 +234,12 @@ const StockDetailsPage = () => {
               />
               <ModalButtons>
                 <PortfolioBtn type="submit">Add</PortfolioBtn>
-                <CancelBtn type="button" onClick={() => setShowPortfolioModal(false)}>Cancel</CancelBtn>
+                <CancelBtn
+                  type="button"
+                  onClick={() => setShowPortfolioModal(false)}
+                >
+                  Cancel
+                </CancelBtn>
               </ModalButtons>
             </form>
           </Modal>
@@ -205,8 +255,12 @@ const StockDetailsPage = () => {
             {history.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={history}>
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-                  <YAxis domain={["auto", "auto"]} tick={{ fontSize: 11 }} />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 15 }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis domain={["auto", "auto"]} tick={{ fontSize: 15 }} />
                   <Tooltip formatter={(value) => [`$${value}`, "Price"]} />
                   <Line
                     type="monotone"
@@ -228,11 +282,20 @@ const StockDetailsPage = () => {
             {news.length > 0 ? (
               <NewsList>
                 {news.map((article) => (
-                  <NewsItem key={article.id} href={article.url} target="_blank" rel="noopener noreferrer">
-                    {article.image && <NewsImage src={article.image} alt={article.headline} />}
+                  <NewsItem
+                    key={article.id}
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {article.image && (
+                      <NewsImage src={article.image} alt={article.headline} />
+                    )}
                     <NewsContent>
                       <NewsHeadline>{article.headline}</NewsHeadline>
-                      <NewsMeta>{article.source} · {article.datetime}</NewsMeta>
+                      <NewsMeta>
+                        {article.source} · {article.datetime}
+                      </NewsMeta>
                     </NewsContent>
                   </NewsItem>
                 ))}
@@ -269,7 +332,9 @@ const StockDetailsPage = () => {
                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                 disabled={!user}
               />
-              <SendBtn onClick={handleSendMessage} disabled={!user}>Send</SendBtn>
+              <SendBtn onClick={handleSendMessage} disabled={!user}>
+                Send
+              </SendBtn>
             </ChatInputRow>
           </Section>
         </RightColumn>
@@ -281,7 +346,6 @@ const StockDetailsPage = () => {
 export default StockDetailsPage;
 
 // --- Styled Components ---
-
 const PageWrapper = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -295,6 +359,7 @@ const FeedbackBanner = styled.div`
   border-radius: 8px;
   margin-bottom: 16px;
   font-weight: 500;
+  font-size: 1rem;
 `;
 
 const StockHeader = styled.div`
@@ -320,7 +385,7 @@ const Logo = styled.img`
 `;
 
 const CompanyName = styled.h1`
-  font-size: 1.5rem;
+  font-size: 1.875rem;
   font-weight: 700;
   margin: 0;
 `;
@@ -328,7 +393,7 @@ const CompanyName = styled.h1`
 const SymbolText = styled.p`
   color: #6b7280;
   margin: 4px 0 0;
-  font-size: 0.9rem;
+  font-size: 1.05rem;
 `;
 
 const PriceBlock = styled.div`
@@ -336,12 +401,12 @@ const PriceBlock = styled.div`
 `;
 
 const CurrentPrice = styled.div`
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 700;
 `;
 
 const Change = styled.div`
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: ${({ $positive }) => ($positive ? "#22c55e" : "#ef4444")};
   font-weight: 500;
 `;
@@ -363,13 +428,13 @@ const StatItem = styled.div`
 `;
 
 const StatLabel = styled.span`
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   color: #6b7280;
   text-transform: uppercase;
 `;
 
 const StatValue = styled.span`
-  font-size: 1rem;
+  font-size: 1.15rem;
   font-weight: 600;
 `;
 
@@ -387,7 +452,10 @@ const WatchlistBtn = styled.button`
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  &:hover { background: #1d4ed8; }
+  font-size: 1rem;
+  &:hover {
+    background: #1d4ed8;
+  }
 `;
 
 const PortfolioBtn = styled.button`
@@ -398,7 +466,10 @@ const PortfolioBtn = styled.button`
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  &:hover { background: #15803d; }
+  font-size: 1rem;
+  &:hover {
+    background: #15803d;
+  }
 `;
 
 const CancelBtn = styled.button`
@@ -409,13 +480,16 @@ const CancelBtn = styled.button`
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  &:hover { background: #d1d5db; }
+  font-size: 1rem;
+  &:hover {
+    background: #d1d5db;
+  }
 `;
 
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -431,7 +505,7 @@ const Modal = styled.div`
 
 const ModalTitle = styled.h2`
   margin: 0 0 20px;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
 `;
 
 const ModalInput = styled.input`
@@ -440,7 +514,7 @@ const ModalInput = styled.input`
   border: 1px solid #d1d5db;
   border-radius: 8px;
   margin-bottom: 12px;
-  font-size: 1rem;
+  font-size: 1.1rem;
   box-sizing: border-box;
 `;
 
@@ -476,7 +550,7 @@ const Section = styled.div`
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 1.1rem;
+  font-size: 1.6rem;
   font-weight: 700;
   margin: 0 0 16px;
 `;
@@ -492,7 +566,9 @@ const NewsItem = styled.a`
   gap: 12px;
   text-decoration: none;
   color: inherit;
-  &:hover h3 { color: #2563eb; }
+  &:hover h3 {
+    color: #2563eb;
+  }
 `;
 
 const NewsImage = styled.img`
@@ -506,14 +582,14 @@ const NewsImage = styled.img`
 const NewsContent = styled.div``;
 
 const NewsHeadline = styled.h3`
-  font-size: 0.9rem;
+  font-size: 1.2rem;
   font-weight: 600;
   margin: 0 0 4px;
   line-height: 1.4;
 `;
 
 const NewsMeta = styled.p`
-  font-size: 0.75rem;
+  font-size: 1rem;
   color: #6b7280;
   margin: 0;
 `;
@@ -530,7 +606,7 @@ const ChatBox = styled.div`
 
 const EmptyChat = styled.p`
   color: #9ca3af;
-  font-size: 0.85rem;
+  font-size: 1.1rem;
   text-align: center;
   margin-top: 40px;
 `;
@@ -543,17 +619,17 @@ const ChatMessage = styled.div`
 
 const ChatUser = styled.div`
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 1.05rem;
   color: #2563eb;
 `;
 
 const ChatText = styled.div`
-  font-size: 0.9rem;
+  font-size: 1.15rem;
   margin: 2px 0;
 `;
 
 const ChatTime = styled.div`
-  font-size: 0.7rem;
+  font-size: 0.95rem;
   color: #9ca3af;
 `;
 
@@ -567,8 +643,11 @@ const ChatInput = styled.input`
   padding: 10px 12px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 0.9rem;
-  &:disabled { background: #f9fafb; cursor: not-allowed; }
+  font-size: 1.1rem;
+  &:disabled {
+    background: #f9fafb;
+    cursor: not-allowed;
+  }
 `;
 
 const SendBtn = styled.button`
@@ -579,6 +658,12 @@ const SendBtn = styled.button`
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  &:disabled { background: #93c5fd; cursor: not-allowed; }
-  &:hover:not(:disabled) { background: #1d4ed8; }
+  font-size: 1.1rem;
+  &:disabled {
+    background: #93c5fd;
+    cursor: not-allowed;
+  }
+  &:hover:not(:disabled) {
+    background: #1d4ed8;
+  }
 `;
