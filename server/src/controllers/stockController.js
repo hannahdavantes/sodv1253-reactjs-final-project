@@ -27,28 +27,34 @@ export const getStockDetails = async (req, res) => {
 };
 
 // GET /api/stocks/:symbol/history - 30-day price history
+// GET /api/stocks/:symbol/history - 30-day price history
 export const getStockHistory = async (req, res) => {
   try {
     const { symbol } = req.params;
     const sym = symbol.toUpperCase();
 
-    const to = Math.floor(Date.now() / 1000);
-    const from = to - 30 * 24 * 60 * 60; // 30 days ago
-
     const response = await fetch(
-      `${BASE_URL}/stock/candle?symbol=${sym}&resolution=D&from=${from}&to=${to}&token=${API_KEY}`
+      `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${sym}&outputsize=compact&apikey=${process.env.ALPHA_VANTAGE_API_KEY}`,
     );
     const data = await response.json();
 
-    if (data.s === "no_data" || !data.t) {
+    const timeSeries = data["Time Series (Daily)"];
+
+    if (!timeSeries) {
       return res.json({ history: [] });
     }
 
-    // Convert arrays to array of objects for easier use on frontend
-    const history = data.t.map((timestamp, i) => ({
-      date: new Date(timestamp * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      close: parseFloat(data.c[i].toFixed(2)),
-    }));
+    // compact returns last 100 days, slice to 30
+    const history = Object.entries(timeSeries)
+      .slice(0, 30)
+      .reverse()
+      .map(([date, values]) => ({
+        date: new Date(date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        close: parseFloat(parseFloat(values["4. close"]).toFixed(2)),
+      }));
 
     res.json({ history });
   } catch (error) {
@@ -61,7 +67,7 @@ export const getStockHistory = async (req, res) => {
 export const getMarketNews = async (req, res) => {
   try {
     const response = await fetch(
-      `${BASE_URL}/news?category=general&token=${API_KEY}`
+      `${BASE_URL}/news?category=general&token=${API_KEY}`,
     );
     const data = await response.json();
 
@@ -94,7 +100,7 @@ export const getStockNews = async (req, res) => {
       .split("T")[0];
 
     const response = await fetch(
-      `${BASE_URL}/company-news?symbol=${sym}&from=${from}&to=${to}&token=${API_KEY}`
+      `${BASE_URL}/company-news?symbol=${sym}&from=${from}&to=${to}&token=${API_KEY}`,
     );
     const data = await response.json();
 

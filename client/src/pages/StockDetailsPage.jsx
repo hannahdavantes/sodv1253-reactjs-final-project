@@ -59,6 +59,7 @@ const StockDetailsPage = () => {
           getStockHistory(symbol),
           getStockNews(symbol),
         ]);
+        console.log("historyData:", historyData);
         setStock(detailsData);
         setHistory(historyData.history);
         setNews(newsData.news);
@@ -726,6 +727,7 @@ const ChatBox = styled.div`
   padding: 1.2rem;
   background-color: var(--off-white);
   border-radius: 0.8rem;
+  border: 3px solid var(--gray-3);
 
   &::-webkit-scrollbar {
     width: 0.5rem;
