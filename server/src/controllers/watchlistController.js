@@ -1,100 +1,86 @@
 import sql from "mssql";
 import { poolPromise } from "../config/db.js";
 
-// GET /api/watchlist - get user's watchlist
+// GET /api/watchlist
 export const getWatchlist = async (req, res) => {
   try {
+    const userId = req.user.id;
     const pool = await poolPromise;
+
     const result = await pool
       .request()
-      .input("userId", sql.Int, req.user.id)
-      .query("SELECT * FROM Watchlist WHERE UserId = @userId ORDER BY AddedAt DESC");
+      .input("userId", sql.Int, userId)
+      .query("SELECT * FROM Watchlist WHERE UserId = @userId");
 
-    res.json({ watchlist: result.recordset });
+    res.json({ success: true, watchlist: result.recordset });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// POST /api/watchlist - add stock to watchlist
+// POST /api/watchlist
 export const addToWatchlist = async (req, res) => {
   try {
+    const userId = req.user.id;
     const { symbol, companyName } = req.body;
 
     if (!symbol) {
-      return res.status(400).json({ message: "Symbol is required" });
+      return res.status(400).json({ message: "Stock symbol is required" });
     }
 
     const pool = await poolPromise;
 
-    // Check if already in watchlist
     const existing = await pool
       .request()
-      .input("userId", sql.Int, req.user.id)
-      .input("symbol", sql.NVarChar, symbol.toUpperCase())
-      .query("SELECT * FROM Watchlist WHERE UserId = @userId AND Symbol = @symbol");
+      .input("userId", sql.Int, userId)
+      .input("symbol", sql.NVarChar, symbol)
+      .query(
+        "SELECT Id FROM Watchlist WHERE UserId = @userId AND Symbol = @symbol",
+      );
 
     if (existing.recordset.length > 0) {
-      return res.status(400).json({ message: "Stock already in watchlist" });
+      return res.status(409).json({ message: "Stock already in watchlist" });
     }
 
     await pool
       .request()
-      .input("userId", sql.Int, req.user.id)
+      .input("userId", sql.Int, userId)
       .input("symbol", sql.NVarChar, symbol.toUpperCase())
-      .input("companyName", sql.NVarChar, companyName || symbol.toUpperCase())
-      .query("INSERT INTO Watchlist (UserId, Symbol, CompanyName) VALUES (@userId, @symbol, @companyName)");
+      .input("displaySymbol", sql.NVarChar, symbol.toUpperCase())
+      .input("description", sql.NVarChar, companyName || "").query(`
+        INSERT INTO Watchlist (UserId, Symbol, DisplaySymbol, Description)
+        VALUES (@userId, @symbol, @displaySymbol, @description)
+      `);
 
-    res.status(201).json({ message: "Added to watchlist" });
+    res.status(201).json({ message: "Stock added to watchlist" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// DELETE /api/watchlist/:symbol - remove stock from watchlist
+// DELETE /api/watchlist/:symbol
 export const removeFromWatchlist = async (req, res) => {
   try {
+    const userId = req.user.id;
     const { symbol } = req.params;
 
     const pool = await poolPromise;
-    await pool
+
+    const result = await pool
       .request()
-      .input("userId", sql.Int, req.user.id)
+      .input("userId", sql.Int, userId)
       .input("symbol", sql.NVarChar, symbol.toUpperCase())
-      .query("DELETE FROM Watchlist WHERE UserId = @userId AND Symbol = @symbol");
+      .query(
+        "DELETE FROM Watchlist WHERE UserId = @userId AND Symbol = @symbol",
+      );
 
-    res.json({ message: "Removed from watchlist" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-// POST /api/portfolio - add stock to portfolio
-export const addToPortfolio = async (req, res) => {
-  try {
-    const { symbol, companyName, quantity, purchasePrice } = req.body;
-
-    if (!symbol || !quantity || !purchasePrice) {
-      return res.status(400).json({ message: "Symbol, quantity and purchase price are required" });
+    if (result.rowsAffected[0] === 0) {
+      return res.status(404).json({ message: "Stock not found in watchlist" });
     }
 
-    const pool = await poolPromise;
-    await pool
-      .request()
-      .input("userId", sql.Int, req.user.id)
-      .input("symbol", sql.NVarChar, symbol.toUpperCase())
-      .input("companyName", sql.NVarChar, companyName || symbol.toUpperCase())
-      .input("quantity", sql.Decimal(10, 2), quantity)
-      .input("purchasePrice", sql.Decimal(10, 2), purchasePrice)
-      .query(`
-        INSERT INTO Portfolio (UserId, Symbol, CompanyName, Quantity, PurchasePrice)
-        VALUES (@userId, @symbol, @companyName, @quantity, @purchasePrice)
-      `);
-
-    res.status(201).json({ message: "Added to portfolio" });
+    res.json({ message: "Stock removed from watchlist" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });

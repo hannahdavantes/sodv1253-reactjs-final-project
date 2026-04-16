@@ -103,6 +103,10 @@ const StockDetailsPage = () => {
     }
   };
 
+  const handleGetCurrentPrice = () => {
+    setPurchasePrice(quote.c?.toFixed(2));
+  };
+
   const handleAddToPortfolio = async (e) => {
     e.preventDefault();
     if (!user) return showFeedback("Please log in to add to portfolio");
@@ -199,17 +203,19 @@ const StockDetailsPage = () => {
       </StatsRow>
 
       {/* Action Buttons */}
-      <ActionButtons>
-        <WatchlistBtn onClick={handleAddToWatchlist}>
-          + Add to Watchlist
-        </WatchlistBtn>
-        <PortfolioBtn onClick={() => setShowPortfolioModal(true)}>
-          + Add to Portfolio
-        </PortfolioBtn>
-      </ActionButtons>
+      {user && (
+        <ActionButtons>
+          <WatchlistBtn onClick={handleAddToWatchlist}>
+            + Add to Watchlist
+          </WatchlistBtn>
+          <PortfolioBtn onClick={() => setShowPortfolioModal(true)}>
+            + Add to Portfolio
+          </PortfolioBtn>
+        </ActionButtons>
+      )}
 
       {/* Portfolio Modal */}
-      {showPortfolioModal && (
+      {user && showPortfolioModal && (
         <ModalOverlay>
           <Modal>
             <ModalTitle>Add {symbol.toUpperCase()} to Portfolio</ModalTitle>
@@ -220,8 +226,8 @@ const StockDetailsPage = () => {
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 required
-                min="0.01"
-                step="0.01"
+                min="1"
+                step="1"
               />
               <ModalInput
                 type="number"
@@ -232,6 +238,9 @@ const StockDetailsPage = () => {
                 min="0.01"
                 step="0.01"
               />
+              <GetPriceBtn type="button" onClick={handleGetCurrentPrice}>
+                Get Current Price (${quote.c?.toFixed(2)})
+              </GetPriceBtn>
               <ModalButtons>
                 <PortfolioBtn type="submit">Add</PortfolioBtn>
                 <CancelBtn
@@ -359,7 +368,7 @@ const FeedbackBanner = styled.div`
   border-radius: 8px;
   margin-bottom: 16px;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 1.4rem;
 `;
 
 const StockHeader = styled.div`
@@ -385,7 +394,7 @@ const Logo = styled.img`
 `;
 
 const CompanyName = styled.h1`
-  font-size: 1.875rem;
+  font-size: 2.8rem;
   font-weight: 700;
   margin: 0;
 `;
@@ -393,7 +402,7 @@ const CompanyName = styled.h1`
 const SymbolText = styled.p`
   color: #6b7280;
   margin: 4px 0 0;
-  font-size: 1.05rem;
+  font-size: 1.4rem;
 `;
 
 const PriceBlock = styled.div`
@@ -401,12 +410,12 @@ const PriceBlock = styled.div`
 `;
 
 const CurrentPrice = styled.div`
-  font-size: 2.5rem;
+  font-size: 2.8rem;
   font-weight: 700;
 `;
 
 const Change = styled.div`
-  font-size: 1.2rem;
+  font-size: 1.6rem;
   color: ${({ $positive }) => ($positive ? "#22c55e" : "#ef4444")};
   font-weight: 500;
 `;
@@ -428,13 +437,13 @@ const StatItem = styled.div`
 `;
 
 const StatLabel = styled.span`
-  font-size: 0.9rem;
+  font-size: 1.2rem;
   color: #6b7280;
   text-transform: uppercase;
 `;
 
 const StatValue = styled.span`
-  font-size: 1.15rem;
+  font-size: 1.6rem;
   font-weight: 600;
 `;
 
@@ -452,7 +461,7 @@ const WatchlistBtn = styled.button`
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.4rem;
   &:hover {
     background: #1d4ed8;
   }
@@ -466,7 +475,7 @@ const PortfolioBtn = styled.button`
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.4rem;
   &:hover {
     background: #15803d;
   }
@@ -480,7 +489,7 @@ const CancelBtn = styled.button`
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.4rem;
   &:hover {
     background: #d1d5db;
   }
@@ -505,7 +514,7 @@ const Modal = styled.div`
 
 const ModalTitle = styled.h2`
   margin: 0 0 20px;
-  font-size: 1.4rem;
+  font-size: 2rem;
 `;
 
 const ModalInput = styled.input`
@@ -514,7 +523,7 @@ const ModalInput = styled.input`
   border: 1px solid #d1d5db;
   border-radius: 8px;
   margin-bottom: 12px;
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   box-sizing: border-box;
 `;
 
@@ -550,7 +559,7 @@ const Section = styled.div`
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 1.6rem;
+  font-size: 2.8rem;
   font-weight: 700;
   margin: 0 0 16px;
 `;
@@ -582,14 +591,14 @@ const NewsImage = styled.img`
 const NewsContent = styled.div``;
 
 const NewsHeadline = styled.h3`
-  font-size: 1.2rem;
+  font-size: 1.6rem;
   font-weight: 600;
   margin: 0 0 4px;
   line-height: 1.4;
 `;
 
 const NewsMeta = styled.p`
-  font-size: 1rem;
+  font-size: 1.4rem;
   color: #6b7280;
   margin: 0;
 `;
@@ -606,7 +615,7 @@ const ChatBox = styled.div`
 
 const EmptyChat = styled.p`
   color: #9ca3af;
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   text-align: center;
   margin-top: 40px;
 `;
@@ -619,17 +628,17 @@ const ChatMessage = styled.div`
 
 const ChatUser = styled.div`
   font-weight: 600;
-  font-size: 1.05rem;
+  font-size: 1.4rem;
   color: #2563eb;
 `;
 
 const ChatText = styled.div`
-  font-size: 1.15rem;
+  font-size: 1.4rem;
   margin: 2px 0;
 `;
 
 const ChatTime = styled.div`
-  font-size: 0.95rem;
+  font-size: 1.2rem;
   color: #9ca3af;
 `;
 
@@ -643,7 +652,7 @@ const ChatInput = styled.input`
   padding: 10px 12px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   &:disabled {
     background: #f9fafb;
     cursor: not-allowed;
@@ -658,12 +667,30 @@ const SendBtn = styled.button`
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   &:disabled {
     background: #93c5fd;
     cursor: not-allowed;
   }
   &:hover:not(:disabled) {
     background: #1d4ed8;
+  }
+`;
+
+const GetPriceBtn = styled.button`
+  width: 100%;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.4rem;
+  font-weight: 500;
+  margin-bottom: 12px;
+  text-align: left;
+  transition: background 0.2s;
+  &:hover {
+    background: #e5e7eb;
   }
 `;
