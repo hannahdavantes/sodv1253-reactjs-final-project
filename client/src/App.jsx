@@ -21,7 +21,7 @@ const router = createBrowserRouter([
         element: <LandingPage />,
       },
       {
-        path: "/stocks",
+        path: "/stocks/:symbol",
         element: <StockDetailsPage />,
       },
       {
