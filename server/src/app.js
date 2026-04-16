@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { poolPromise } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
 
 const app = express();
 
@@ -28,5 +29,6 @@ app.get("/", async (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/chat", chatRoutes);
 
 export default app;
