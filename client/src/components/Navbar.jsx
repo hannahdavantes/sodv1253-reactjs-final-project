@@ -134,7 +134,8 @@ const Navbar = () => {
         </NavLink>
 
         <NavLink
-          to="/stocks"
+          to="/"
+          end
           className={({ isActive }) => (isActive ? "active" : "")}
         >
           Stocks
