@@ -9,8 +9,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { io } from "socket.io-client";
+import { Client as ConversationsClient } from "@twilio/conversations";
 import { useAuth } from "../context/AuthContext";
+import { apiFetch } from "../utils/api";
 import {
   getStockDetails,
   getStockHistory,
@@ -18,8 +19,6 @@ import {
   addToWatchlist,
   addToPortfolio,
 } from "../services/stockService";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 const StockDetailsPage = () => {
   const { symbol } = useParams();
@@ -40,9 +39,14 @@ const StockDetailsPage = () => {
   const [feedback, setFeedback] = useState("");
 
   // Chat state
+  const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
-  const socketRef = useRef(null);
+  const [chatIdentity, setChatIdentity] = useState("");
+  const [chatLoading, setChatLoading] = useState(true);
+  const [chatError, setChatError] = useState(null);
+  const [isSending, setIsSending] = useState(false);
+  const clientRef = useRef(null);
   const messagesEndRef = useRef(null);
 
   // Fetch stock data
@@ -68,20 +72,52 @@ const StockDetailsPage = () => {
     fetchAll();
   }, [symbol]);
 
-  // Socket.io chat setup
+  // Twilio chat setup
   useEffect(() => {
-    socketRef.current = io(API_URL);
-    socketRef.current.emit("join-stock", symbol.toUpperCase());
+    if (!user) {
+      setChatLoading(false);
+      return;
+    }
 
-    socketRef.current.on("chat-message", (data) => {
-      setMessages((prev) => [...prev, data]);
-    });
+    const initChat = async () => {
+      try {
+        const data = await apiFetch(`/api/chat/token/${symbol}`);
+
+        clientRef.current = new ConversationsClient(data.token);
+        setChatIdentity(data.identity);
+
+        const convo = await clientRef.current.getConversationByUniqueName(
+          data.conversationUniqueName,
+        );
+
+        if (convo.status !== "joined") await convo.join();
+
+        const msgs = await convo.getMessages();
+        setMessages(msgs.items);
+
+        convo.on("messageAdded", (msg) => {
+          setMessages((prev) => {
+            const exists = prev.some((m) => m.sid === msg.sid);
+            if (exists) return prev;
+            return [...prev, msg];
+          });
+        });
+
+        setConversation(convo);
+      } catch (err) {
+        console.error("Stock chat error:", err);
+        setChatError("Failed to connect to chat.");
+      } finally {
+        setChatLoading(false);
+      }
+    };
+
+    initChat();
 
     return () => {
-      socketRef.current.emit("leave-stock", symbol.toUpperCase());
-      socketRef.current.disconnect();
+      if (clientRef.current) clientRef.current.shutdown();
     };
-  }, [symbol]);
+  }, [symbol, user]);
 
   // Auto scroll chat to bottom
   useEffect(() => {
@@ -104,7 +140,7 @@ const StockDetailsPage = () => {
   };
 
   const handleGetCurrentPrice = () => {
-    setPurchasePrice(quote.c?.toFixed(2));
+    setPurchasePrice(stock?.quote?.c?.toFixed(2));
   };
 
   const handleAddToPortfolio = async (e) => {
@@ -126,16 +162,28 @@ const StockDetailsPage = () => {
     }
   };
 
-  const handleSendMessage = () => {
-    if (!chatInput.trim()) return;
-    if (!user) return showFeedback("Please log in to chat");
+  const handleSendMessage = async () => {
+    if (!chatInput.trim() || !conversation || chatError) return;
+    try {
+      setIsSending(true);
+      await conversation.sendMessage(chatInput);
+      setChatInput("");
+    } catch (err) {
+      console.error("Send error:", err);
+      setChatError("Failed to send message.");
+    } finally {
+      setIsSending(false);
+    }
+  };
 
-    socketRef.current.emit("chat-message", {
-      symbol: symbol.toUpperCase(),
-      message: chatInput,
-      user: `${user.firstName} ${user.lastName}`,
-    });
-    setChatInput("");
+  const formatAuthor = (author) => {
+    const parts = author.split("-");
+    if (parts.length >= 4) {
+      const firstName = parts[2];
+      const lastName = parts[3];
+      if (firstName && lastName) return `${firstName} ${lastName}`;
+    }
+    return "Unknown User";
   };
 
   if (loading)
@@ -319,32 +367,76 @@ const StockDetailsPage = () => {
         <RightColumn>
           <Section>
             <SectionTitle>Live Chat — {symbol.toUpperCase()}</SectionTitle>
+
             <ChatBox>
-              {messages.length === 0 && (
-                <EmptyChat>No messages yet. Be the first to comment!</EmptyChat>
+              {chatLoading && (
+                <div className="status-box">
+                  <div className="spinner" />
+                  <p>Connecting to chat...</p>
+                </div>
               )}
-              {messages.map((msg, i) => (
-                <ChatMessage key={i}>
-                  <ChatUser>{msg.user}</ChatUser>
-                  <ChatText>{msg.message}</ChatText>
-                  <ChatTime>{msg.timestamp}</ChatTime>
-                </ChatMessage>
-              ))}
+
+              {!chatLoading && chatError && (
+                <div className="status-box">
+                  <p className="error">⚠️ {chatError}</p>
+                </div>
+              )}
+
+              {!chatLoading && !chatError && !user && (
+                <div className="status-box">
+                  <p>Log in to participate in the chat.</p>
+                </div>
+              )}
+
+              {!chatLoading && !chatError && user && messages.length === 0 && (
+                <div className="status-box">
+                  <p>No messages yet. Be the first to comment!</p>
+                </div>
+              )}
+
+              {!chatLoading &&
+                !chatError &&
+                user &&
+                messages.map((msg) => {
+                  const isOwn = msg.author === chatIdentity;
+                  return (
+                    <ChatMessage key={msg.sid} $own={isOwn}>
+                      <ChatUser>
+                        {isOwn ? "You" : formatAuthor(msg.author)}
+                      </ChatUser>
+                      <ChatBubble $own={isOwn}>{msg.body}</ChatBubble>
+                      <ChatTime>
+                        {new Date(msg.dateCreated).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </ChatTime>
+                    </ChatMessage>
+                  );
+                })}
               <div ref={messagesEndRef} />
             </ChatBox>
-            <ChatInputRow>
-              <ChatInput
-                type="text"
-                placeholder={user ? "Type a message..." : "Log in to chat"}
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                disabled={!user}
-              />
-              <SendBtn onClick={handleSendMessage} disabled={!user}>
-                Send
-              </SendBtn>
-            </ChatInputRow>
+
+            {user && (
+              <ChatInputRow>
+                <ChatInput
+                  type="text"
+                  placeholder={
+                    chatError ? "Chat unavailable" : "Type a message..."
+                  }
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                  disabled={!!chatError || isSending}
+                />
+                <SendBtn
+                  onClick={handleSendMessage}
+                  disabled={!!chatError || isSending}
+                >
+                  {isSending ? "..." : "Send"}
+                </SendBtn>
+              </ChatInputRow>
+            )}
           </Section>
         </RightColumn>
       </ContentGrid>
@@ -355,6 +447,7 @@ const StockDetailsPage = () => {
 export default StockDetailsPage;
 
 // --- Styled Components ---
+
 const PageWrapper = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -495,6 +588,25 @@ const CancelBtn = styled.button`
   }
 `;
 
+const GetPriceBtn = styled.button`
+  width: 100%;
+  padding: 0.8rem 1.2rem;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.4rem;
+  font-weight: 500;
+  margin-bottom: 12px;
+  text-align: left;
+  transition: background 0.2s;
+  font-family: var(--font-body);
+  &:hover {
+    background: #e5e7eb;
+  }
+`;
+
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -525,6 +637,7 @@ const ModalInput = styled.input`
   margin-bottom: 12px;
   font-size: 1.4rem;
   box-sizing: border-box;
+  font-family: var(--font-body);
 `;
 
 const ModalButtons = styled.div`
@@ -604,93 +717,146 @@ const NewsMeta = styled.p`
 `;
 
 const ChatBox = styled.div`
-  height: 320px;
+  height: 420px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-bottom: 12px;
-  padding-right: 4px;
-`;
+  padding: 1.2rem;
+  background-color: var(--off-white);
+  border-radius: 0.8rem;
 
-const EmptyChat = styled.p`
-  color: #9ca3af;
-  font-size: 1.4rem;
-  text-align: center;
-  margin-top: 40px;
+  &::-webkit-scrollbar {
+    width: 0.5rem;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--gray-2);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--gray-4);
+    border-radius: 1rem;
+  }
+
+  .status-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    height: 100%;
+
+    p {
+      font-size: 1.4rem;
+      color: var(--gray-6);
+      text-align: center;
+
+      &.error {
+        color: var(--secondary-color);
+      }
+    }
+
+    .spinner {
+      width: 3.2rem;
+      height: 3.2rem;
+      border: 3px solid var(--gray-3);
+      border-top-color: var(--tertiary-color);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  }
 `;
 
 const ChatMessage = styled.div`
-  background: #f3f4f6;
-  border-radius: 8px;
-  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: ${({ $own }) => ($own ? "flex-end" : "flex-start")};
 `;
 
 const ChatUser = styled.div`
   font-weight: 600;
-  font-size: 1.4rem;
-  color: #2563eb;
+  font-size: 1.2rem;
+  color: var(--gray-6);
+  margin-bottom: 0.3rem;
 `;
 
-const ChatText = styled.div`
+const ChatBubble = styled.div`
+  max-width: 80%;
+  padding: 1rem 1.4rem;
   font-size: 1.4rem;
-  margin: 2px 0;
+  word-break: break-word;
+  color: var(--primary-color-dark);
+  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.06);
+  background-color: ${({ $own }) =>
+    $own ? "var(--tertiary-color)" : "var(--white)"};
+  border-radius: ${({ $own }) =>
+    $own ? "1rem 1rem 0 1rem" : "1rem 1rem 1rem 0"};
+  border: ${({ $own }) => ($own ? "none" : "1px solid var(--gray-3)")};
 `;
 
 const ChatTime = styled.div`
-  font-size: 1.2rem;
-  color: #9ca3af;
+  font-size: 1.1rem;
+  color: var(--gray-5);
+  margin-top: 0.3rem;
 `;
 
 const ChatInputRow = styled.div`
   display: flex;
-  gap: 8px;
+  gap: 1.2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--gray-2);
 `;
 
 const ChatInput = styled.input`
   flex: 1;
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  padding: 1.2rem 1.4rem;
+  border: 0.1rem solid var(--gray-4);
+  border-radius: 0.8rem;
   font-size: 1.4rem;
+  background-color: var(--off-white);
+  color: var(--primary-color-dark);
+  font-family: var(--font-body);
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--tertiary-color);
+    box-shadow: 0 0 0 0.2rem rgba(238, 162, 52, 0.2);
+  }
+
   &:disabled {
-    background: #f9fafb;
+    opacity: 0.5;
     cursor: not-allowed;
+    background-color: var(--gray-2);
   }
 `;
 
 const SendBtn = styled.button`
-  padding: 10px 16px;
-  background: #2563eb;
-  color: white;
+  padding: 1.2rem 1.6rem;
+  background-color: var(--tertiary-color);
+  color: var(--primary-color-dark);
   border: none;
-  border-radius: 8px;
+  border-radius: 0.8rem;
   cursor: pointer;
   font-weight: 600;
   font-size: 1.4rem;
+  font-family: var(--font-body);
+  transition: all 0.2s ease;
+
   &:disabled {
-    background: #93c5fd;
+    opacity: 0.6;
     cursor: not-allowed;
   }
-  &:hover:not(:disabled) {
-    background: #1d4ed8;
-  }
-`;
 
-const GetPriceBtn = styled.button`
-  width: 100%;
-  padding: 8px 12px;
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1.4rem;
-  font-weight: 500;
-  margin-bottom: 12px;
-  text-align: left;
-  transition: background 0.2s;
-  &:hover {
-    background: #e5e7eb;
+  &:hover:not(:disabled) {
+    opacity: 0.85;
   }
 `;

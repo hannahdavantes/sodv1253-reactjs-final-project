@@ -90,6 +90,12 @@ const Wrapper = styled.main`
       color: var(--primary-color-dark);
     }
 
+    .time {
+      font-size: 1.1rem;
+      color: var(--gray-5);
+      margin-top: 0.3rem;
+    }
+
     &.own .bubble {
       background-color: var(--tertiary-color);
       border-radius: 1rem 1rem 0 1rem;
@@ -301,6 +307,12 @@ const ChatPage = () => {
                 {isOwn ? "You" : formatAuthor(msg.author)}
               </span>
               <div className="bubble">{msg.body}</div>
+              <span className="time">
+                {new Date(msg.dateCreated).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
             </div>
           );
         })}
