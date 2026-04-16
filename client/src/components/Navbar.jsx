@@ -133,14 +133,6 @@ const Navbar = () => {
           Home
         </NavLink>
 
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) => (isActive ? "active" : "")}
-        >
-          Stocks
-        </NavLink>
-
         {isAuthenticated && (
           <>
             <NavLink

@@ -78,18 +78,31 @@ const LandingPage = () => {
             <>
               {/* Breaking news — most recent article highlighted */}
               {breakingNews && (
-                <BreakingCard href={breakingNews.url} target="_blank" rel="noopener noreferrer">
+                <BreakingCard
+                  href={breakingNews.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <BreakingBadge>Breaking</BreakingBadge>
                   <BreakingBody>
                     {breakingNews.image && (
-                      <BreakingImage src={breakingNews.image} alt={breakingNews.headline} />
+                      <BreakingImage
+                        src={breakingNews.image}
+                        alt={breakingNews.headline}
+                      />
                     )}
                     <BreakingText>
-                      <BreakingHeadline>{breakingNews.headline}</BreakingHeadline>
+                      <BreakingHeadline>
+                        {breakingNews.headline}
+                      </BreakingHeadline>
                       {breakingNews.summary && (
-                        <BreakingSummary>{breakingNews.summary}</BreakingSummary>
+                        <BreakingSummary>
+                          {breakingNews.summary}
+                        </BreakingSummary>
                       )}
-                      <NewsMeta>{breakingNews.source} · {breakingNews.datetime}</NewsMeta>
+                      <NewsMeta>
+                        {breakingNews.source} · {breakingNews.datetime}
+                      </NewsMeta>
                     </BreakingText>
                   </BreakingBody>
                 </BreakingCard>
@@ -98,13 +111,20 @@ const LandingPage = () => {
               {/* Remaining news */}
               <NewsList>
                 {restNews.map((article) => (
-                  <NewsItem key={article.id} href={article.url} target="_blank" rel="noopener noreferrer">
+                  <NewsItem
+                    key={article.id}
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     {article.image && (
                       <NewsImage src={article.image} alt={article.headline} />
                     )}
                     <NewsContent>
                       <NewsHeadline>{article.headline}</NewsHeadline>
-                      <NewsMeta>{article.source} · {article.datetime}</NewsMeta>
+                      <NewsMeta>
+                        {article.source} · {article.datetime}
+                      </NewsMeta>
                     </NewsContent>
                   </NewsItem>
                 ))}
@@ -169,7 +189,9 @@ const SearchBtn = styled.button`
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  &:hover { background: #1d4ed8; }
+  &:hover {
+    background: #1d4ed8;
+  }
 `;
 
 const Content = styled.div`
@@ -183,7 +205,7 @@ const Section = styled.div`
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 1.3rem;
+  font-size: 2.8rem;
   font-weight: 700;
   margin: 0 0 20px;
   color: #111827;
@@ -191,7 +213,7 @@ const SectionTitle = styled.h2`
 
 const StocksGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 16px;
 `;
 
@@ -199,25 +221,27 @@ const StockCard = styled(Link)`
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 20px 16px;
+  padding: 28px 24px;
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.2s, border-color 0.2s;
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s;
   &:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: #2563eb;
   }
 `;
 
 const StockSymbol = styled.div`
-  font-size: 1.2rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: #2563eb;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 `;
 
 const StockName = styled.div`
-  font-size: 0.8rem;
+  font-size: 1.4rem;
   color: #6b7280;
 `;
 
@@ -230,14 +254,16 @@ const BreakingCard = styled.a`
   text-decoration: none;
   color: inherit;
   margin-bottom: 24px;
-  &:hover h3 { color: #2563eb; }
+  &:hover h3 {
+    color: #2563eb;
+  }
 `;
 
 const BreakingBadge = styled.span`
   display: inline-block;
   background: #ef4444;
   color: white;
-  font-size: 0.75rem;
+  font-size: 1.8rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -268,14 +294,14 @@ const BreakingText = styled.div`
 `;
 
 const BreakingHeadline = styled.h3`
-  font-size: 1.1rem;
+  font-size: 1.6rem;
   font-weight: 700;
   margin: 0 0 8px;
   line-height: 1.4;
 `;
 
 const BreakingSummary = styled.p`
-  font-size: 0.9rem;
+  font-size: 1.4rem;
   color: #374151;
   margin: 0 0 8px;
   line-height: 1.5;
@@ -300,7 +326,9 @@ const NewsItem = styled.a`
   padding: 14px;
   text-decoration: none;
   color: inherit;
-  &:hover h3 { color: #2563eb; }
+  &:hover h3 {
+    color: #2563eb;
+  }
 `;
 
 const NewsImage = styled.img`
@@ -316,14 +344,14 @@ const NewsContent = styled.div`
 `;
 
 const NewsHeadline = styled.h3`
-  font-size: 0.95rem;
+  font-size: 1.8rem;
   font-weight: 600;
   margin: 0 0 6px;
   line-height: 1.4;
 `;
 
 const NewsMeta = styled.p`
-  font-size: 0.75rem;
+  font-size: 1.4rem;
   color: #6b7280;
   margin: 0;
 `;

@@ -1,3 +1,4 @@
+import { RouterProvider } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import { useNavigate } from "react-router-dom";
 
@@ -23,22 +24,22 @@ const Wrapper = styled.button`
 
   width: ${(props) => (props.$full ? "100%" : "auto")};
 
-  background-color: ${({ variant }) =>
-    variant === "cancel"
+  background-color: ${({ $variant }) =>
+    $variant === "cancel"
       ? "transparent"
-      : variant === "secondary"
+      : $variant === "secondary"
         ? "var(--primary-color-light)"
         : "var(--tertiary-color)"};
 
-  color: ${({ variant }) =>
-    variant === "cancel"
+  color: ${({ $variant }) =>
+    $variant === "cancel"
       ? "var(--secondary-color)"
-      : variant === "secondary"
+      : $variant === "secondary"
         ? "var(--off-white)"
         : "var(--primary-color-dark)"};
 
-  border: ${({ variant }) =>
-    variant === "cancel" ? "1px solid var(--secondary-color)" : "none"};
+  border: ${({ $variant }) =>
+    $variant === "cancel" ? "1px solid var(--secondary-color)" : "none"};
 
   &:hover {
     opacity: 0.85;
@@ -73,18 +74,14 @@ const Button = ({
 
   const handleClick = (e) => {
     if (isLoading) return;
-
     if (onClick) onClick(e);
-
-    if (to) {
-      navigate(to);
-    }
+    if (to) navigate(to);
   };
 
   return (
     <Wrapper
       type={type}
-      variant={variant}
+      $variant={variant}
       $full={full}
       onClick={handleClick}
       disabled={isLoading || props.disabled}
