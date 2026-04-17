@@ -1,11 +1,9 @@
-import sql from "mssql";
-import { poolPromise } from "../config/db.js";
+import { getPool, sql } from "../config/db.js";
 
-// GET /api/portfolio
 export const getPortfolio = async (req, res) => {
   try {
     const userId = req.user.id;
-    const pool = await poolPromise;
+    const pool = await getPool();
 
     const result = await pool
       .request()
@@ -19,7 +17,6 @@ export const getPortfolio = async (req, res) => {
   }
 };
 
-// POST /api/portfolio
 export const addToPortfolio = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -37,7 +34,7 @@ export const addToPortfolio = async (req, res) => {
       });
     }
 
-    const pool = await poolPromise;
+    const pool = await getPool();
 
     await pool
       .request()
@@ -58,7 +55,6 @@ export const addToPortfolio = async (req, res) => {
   }
 };
 
-// PATCH /api/portfolio/:id
 export const updatePortfolio = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -77,7 +73,7 @@ export const updatePortfolio = async (req, res) => {
       });
     }
 
-    const pool = await poolPromise;
+    const pool = await getPool();
 
     const request = pool
       .request()
@@ -112,13 +108,12 @@ export const updatePortfolio = async (req, res) => {
   }
 };
 
-// DELETE /api/portfolio/:id
 export const removeFromPortfolio = async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
 
-    const pool = await poolPromise;
+    const pool = await getPool();
 
     const result = await pool
       .request()

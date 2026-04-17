@@ -12,17 +12,20 @@ const dbConfig = {
     encrypt: true,
     trustServerCertificate: false,
   },
+  pool: {
+    max: 10,
+    min: 0,
+    idleTimeoutMillis: 30000,
+  },
 };
 
-const poolPromise = new sql.ConnectionPool(dbConfig)
-  .connect()
-  .then((pool) => {
-    console.log("Connected to SQL Server");
-    return pool;
-  })
-  .catch((err) => {
-    console.error("Database Connection Failed:", err.message);
-    return null;
-  });
+let pool = null;
 
-export { sql, poolPromise };
+export const getPool = async () => {
+  if (!pool) {
+    pool = await new sql.ConnectionPool(dbConfig).connect();
+  }
+  return pool;
+};
+
+export { sql };

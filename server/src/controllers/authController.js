@@ -1,9 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import sql from "mssql";
-import { poolPromise } from "../config/db.js";
+import { getPool, sql } from "../config/db.js";
 
-//Register user
 export const register = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
@@ -12,9 +10,8 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const pool = await poolPromise;
+    const pool = await getPool();
 
-    //Check existing user
     const existingUser = await pool
       .request()
       .input("email", sql.NVarChar, email)
@@ -24,11 +21,9 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "Email already exists" });
     }
 
-    //Hash password
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    //Insert user
     const result = await pool
       .request()
       .input("firstName", sql.NVarChar, firstName)
@@ -42,7 +37,6 @@ export const register = async (req, res) => {
 
     const user = result.recordset[0];
 
-    //Create token
     const token = jwt.sign(
       {
         id: user.Id,
@@ -74,16 +68,14 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    //Validation
     if (!email || !password) {
       return res
         .status(400)
         .json({ message: "Email and password are required" });
     }
 
-    const pool = await poolPromise;
+    const pool = await getPool();
 
-    //Find user
     const result = await pool
       .request()
       .input("email", sql.NVarChar, email)
@@ -95,14 +87,12 @@ export const login = async (req, res) => {
 
     const user = result.recordset[0];
 
-    //Compare password
     const isMatch = await bcrypt.compare(password, user.PasswordHash);
 
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    //Generate token
     const token = jwt.sign(
       {
         id: user.Id,

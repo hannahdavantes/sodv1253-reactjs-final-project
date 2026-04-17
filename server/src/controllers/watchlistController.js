@@ -1,11 +1,9 @@
-import sql from "mssql";
-import { poolPromise } from "../config/db.js";
+import { getPool, sql } from "../config/db.js";
 
-// GET /api/watchlist
 export const getWatchlist = async (req, res) => {
   try {
     const userId = req.user.id;
-    const pool = await poolPromise;
+    const pool = await getPool();
 
     const result = await pool
       .request()
@@ -19,7 +17,6 @@ export const getWatchlist = async (req, res) => {
   }
 };
 
-// POST /api/watchlist
 export const addToWatchlist = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -29,7 +26,7 @@ export const addToWatchlist = async (req, res) => {
       return res.status(400).json({ message: "Stock symbol is required" });
     }
 
-    const pool = await poolPromise;
+    const pool = await getPool();
 
     const existing = await pool
       .request()
@@ -60,13 +57,12 @@ export const addToWatchlist = async (req, res) => {
   }
 };
 
-// DELETE /api/watchlist/:symbol
 export const removeFromWatchlist = async (req, res) => {
   try {
     const userId = req.user.id;
     const { symbol } = req.params;
 
-    const pool = await poolPromise;
+    const pool = await getPool();
 
     const result = await pool
       .request()
