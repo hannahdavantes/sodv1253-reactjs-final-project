@@ -40,13 +40,12 @@ export const addToPortfolio = async (req, res) => {
       .request()
       .input("userId", sql.Int, userId)
       .input("symbol", sql.NVarChar, symbol.toUpperCase())
-      .input("displaySymbol", sql.NVarChar, symbol.toUpperCase())
-      .input("description", sql.NVarChar, companyName || "")
+      .input("companyName", sql.NVarChar, companyName || "")
       .input("quantity", sql.Decimal(10, 2), quantity)
       .input("purchasePrice", sql.Decimal(10, 2), purchasePrice).query(`
-        INSERT INTO Portfolio (UserId, Symbol, DisplaySymbol, Description, Quantity, PurchasePrice)
-        VALUES (@userId, @symbol, @displaySymbol, @description, @quantity, @purchasePrice)
-      `);
+    INSERT INTO Portfolio (UserId, Symbol, CompanyName, Quantity, PurchasePrice)
+    VALUES (@userId, @symbol, @companyName, @quantity, @purchasePrice)
+  `);
 
     res.status(201).json({ message: "Stock added to portfolio" });
   } catch (error) {

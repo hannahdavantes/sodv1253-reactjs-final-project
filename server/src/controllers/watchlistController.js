@@ -44,11 +44,10 @@ export const addToWatchlist = async (req, res) => {
       .request()
       .input("userId", sql.Int, userId)
       .input("symbol", sql.NVarChar, symbol.toUpperCase())
-      .input("displaySymbol", sql.NVarChar, symbol.toUpperCase())
-      .input("description", sql.NVarChar, companyName || "").query(`
-        INSERT INTO Watchlist (UserId, Symbol, DisplaySymbol, Description)
-        VALUES (@userId, @symbol, @displaySymbol, @description)
-      `);
+      .input("companyName", sql.NVarChar, companyName || "").query(`
+    INSERT INTO Watchlist (UserId, Symbol, CompanyName)
+    VALUES (@userId, @symbol, @companyName)
+  `);
 
     res.status(201).json({ message: "Stock added to watchlist" });
   } catch (error) {
