@@ -1,7 +1,7 @@
 import { createContext, useContext, useState } from "react";
 import { apiFetch } from "../utils/api";
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   //Load saved user from localStorage
