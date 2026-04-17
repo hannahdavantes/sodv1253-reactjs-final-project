@@ -8,7 +8,12 @@ import portfolioRoutes from "./routes/portfolioRoutes.js";
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://sodv1253-reactjs-final-project-uze6.vercel.app",
+  }),
+);
+
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
